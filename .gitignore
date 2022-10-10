@@ -1,0 +1,15 @@
+.idea
+.vs
+.vscode
+.metals/metals.h2.db
+.metals/metals.lock.db
+.metals/metals.log
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+terraform.dev.tfvars
+*.lock.hcl
