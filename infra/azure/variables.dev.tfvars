@@ -19,3 +19,6 @@ datalake_name = "stblogdev02"
 
 #key vault
 key_vault_name = "kv-blog-dcube-dev-01"
+
+#SPN
+spn_name = "SPN-BLOG-DEV"

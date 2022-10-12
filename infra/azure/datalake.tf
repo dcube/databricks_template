@@ -45,3 +45,9 @@ resource "azurerm_role_assignment" "datalake_iam_devops_contributor" {
   role_definition_name = "Storage Account Contributor"
   principal_id         = data.azurerm_client_config.current.object_id
 }
+
+resource "azurerm_role_assignment" "datalake_spn_contributor" {
+  scope                = azurerm_storage_account.datalake.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_service_principal.spn.object_id
+}

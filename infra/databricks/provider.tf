@@ -8,9 +8,9 @@ terraform {
       version = "~> 3.20.0"
     }
 
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "~> 2.28.1"
+    databricks = {
+      source  = "databricks/databricks"
+      version = "1.3.0"
     }
   }
 }
@@ -20,6 +20,6 @@ provider "azurerm" {
   features {}
 }
 
-# Configure the Azure Active Directory Provider
-provider "azuread" {
+provider "databricks" {
+  host = data.azurerm_databricks_workspace.this.workspace_url
 }

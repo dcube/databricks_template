@@ -10,3 +10,7 @@ data "azurerm_client_config" "current" {}
 data "azurerm_resource_group" "project_resource_group" {
   name = var.project_resource_group
 }
+
+data "azuread_service_principal" "spn" {
+  display_name = var.spn_name
+}

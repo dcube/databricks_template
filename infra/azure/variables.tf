@@ -61,3 +61,10 @@ variable "datalake_name" {
 variable "key_vault_name" {
   type = string
 }
+
+#####################
+# SPN
+#####################
+variable "spn_name" {
+  type = string
+}
