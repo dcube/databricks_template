@@ -1,0 +1,37 @@
+trigger:
+  branches:
+    include:
+    - develop
+    - main
+  paths:
+    include:
+    - infra/databricks/*
+    - databricks/init-scripts/*
+    
+name: Build-Template.databricks.$(BuildID)
+
+jobs:
+- job: 'Clean_and_Publish_Terraform_databricks'
+  displayName: 'Publish Terraform for Databricks settings'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+  - task: Bash@3
+    displayName: Clean folder for publication
+    inputs:
+      targetType: inline
+      script: >-
+        #!/bin/bash
+        # init
+        
+        rm dev.tfvars
+        rm -rf '.terraform/'
+      
+      workingDirectory: infra/databricks
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Terraform Pipeline Artifact'
+    inputs:
+      targetPath: infra/databricks
+      artifact: databricks
+      

@@ -1,0 +1,60 @@
+  parameters:
+  - name: 'ServiceConnection'
+  - name: 'PipelineResourceName'
+  - name: 'EnvironmentName'
+  - name: 'PoolName'
+  - name: 'ArtifactName'
+  - name: 'TerraformKey'
+
+
+  jobs:
+  - deployment: DeployInfra
+    displayName: 'Deploy Infra'
+    environment: ${{ parameters.EnvironmentName }}
+    pool: 
+      name: '${{ parameters.PoolName }}'
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+          - task: replacetokens@5
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/${{ parameters.PipelineResourceName }}/${{ parameters.ArtifactName }}'
+              targetFiles: 'variables.auto.tfvars'
+              encoding: 'auto'
+              tokenPattern: 'rm'
+              writeBOM: false
+              actionOnMissing: 'warn'
+              keepToken: false
+              actionOnNoFiles: 'continue'
+              enableTransforms: false
+              enableRecursion: false
+              useLegacyPattern: false
+              enableTelemetry: true
+
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform 1.2.9'
+            inputs:
+              terraformVersion: 1.2.9
+          
+          - task: TerraformTaskV2@2
+            displayName: 'Terraform : azurerm init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/${{ parameters.PipelineResourceName }}/${{ parameters.ArtifactName }}'
+              commandOptions: '-no-color'
+              backendServiceArm: '${{ parameters.ServiceConnection }}'
+              backendAzureRmResourceGroupName: '$(TerraformResourceGroupName)'
+              backendAzureRmStorageAccountName: $(TerraformStorageAccountName)
+              backendAzureRmContainerName: '$(TerraformContainerName)'
+              backendAzureRmKey: '${{ parameters.TerraformKey }}'
+
+          - task: TerraformTaskV2@2
+            displayName: 'Terraform : azurerm validate and apply'
+            inputs:
+              provider: 'azurerm'
+              command: apply
+              workingDirectory: '$(Pipeline.Workspace)/${{ parameters.PipelineResourceName }}/${{ parameters.ArtifactName }}'
+              commandOptions: '-no-color --var-file=variables.auto.tfvars'
+              environmentServiceNameAzureRM: '${{ parameters.ServiceConnection }}'

@@ -1,0 +1,94 @@
+  parameters:
+  - name: 'ServiceConnection'
+  - name: 'PipelineResourceName'
+  - name: 'EnvironmentName'
+  - name: 'PoolName'
+  - name: 'ArtifactName'
+  - name: 'TerraformKey'
+
+
+  jobs:
+  - deployment: DeployDatabricks
+    displayName: 'Deploy Databricks'
+    environment: ${{ parameters.EnvironmentName }}
+    pool: 
+      name: '${{ parameters.PoolName }}'
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+
+          # Pour récupérer dynamiquement le token à envoyer à databricks
+          - task: AzureCLI@2
+            displayName: 'Get SPN Acces token for Databricks'
+            inputs:
+              azureSubscription: '${{ parameters.ServiceConnection }}'
+              scriptType: 'pscore'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                $accessToken=(az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d | jq .accessToken --raw-output)
+                Write-Host ("##vso[task.setvariable variable=AccessToken;]$accessToken")
+                [System.Environment]::SetEnvironmentVariable('DATABRICKS_AAD_TOKEN', $accessToken, [System.EnvironmentVariableTarget]::Machine)
+              failOnStandardError: true
+          # Pour récupérer l'URL du workspace databricks
+          - task: AzureCLI@2
+            displayName: 'Get Databricks Workspace URL'
+            inputs:
+              azureSubscription: '${{ parameters.ServiceConnection }}'
+              scriptType: 'pscore'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az extension add --name databricks
+                $workspaceUrl=(az databricks workspace show --resource-group "$(HubResourceGroupName)" --name "$(DatabricksWorkspaceName)" --query workspaceUrl --output tsv)
+                Write-Host ("##vso[task.setvariable variable=WorkspaceUrl;]$workspaceUrl")
+              failOnStandardError: true
+          # nécessaire pour les taches databricks
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.8'
+            displayName: 'Use Python 3.8'
+          # installation de databricks connect
+          - task: Bash@3
+            displayName: 'Install et configure Databricks connect'
+            inputs:
+              targetType: 'inline'
+              script: |
+                python -m pip install databricks-cli
+                cat > ~/.databrickscfg <<EOF
+                [DEFAULT]
+                host = https://$(WorkspaceUrl)/
+                token = $(AccessToken)
+                EOF
+          
+          # Suppression du répertoire existant
+          - task: Bash@3
+            displayName: 'Suppression du répertoire /Shared/Notebooks'
+            inputs:
+              targetType: 'inline'
+              script: |
+                FOLDER=/Shared/Notebooks
+                databricks workspace ls $FOLDER > /dev/null
+                RES=$?
+                if [ $RES -eq 0 ]; then
+                  databricks workspace delete -r $FOLDER
+                fi
+              failOnStderr: true
+          # Déploiement des notebooks
+          - task: Bash@3
+            displayName: 'Deploy Notebooks'
+            inputs:
+              targetType: 'inline'
+              script: |
+                databricks workspace import_dir -o '$(Pipeline.Workspace)/resourceBuild/notebooks' '/Shared/Notebooks'
+              failOnStderr: true
+          
+          # Déploiement des scripts d'initialisation des clusters
+          - task: Bash@3
+            displayName: 'Deploy init scripts'
+            inputs:
+              targetType: 'inline'
+              script: |
+                databricks fs rm -r dbfs:/FileStore/init-scripts/
+                databricks fs cp -r $(Pipeline.Workspace)/resourceBuild/init-scripts/ dbfs:/FileStore/init-scripts/ --overwrite
+              failOnStderr: true
+          

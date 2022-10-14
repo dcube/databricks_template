@@ -1,0 +1,54 @@
+# Explicitly set none for repositry trigger
+trigger:
+- none
+
+resources:
+  pipelines:
+  - pipeline: "resourceBuild"  # Name of the pipeline resource
+    source: "Build-Template-Infra" # Name of the triggering pipeline
+    trigger: 
+      branches:
+      - develop
+      - main
+      - release/*
+      - hotfix/*
+      - feature/*
+
+stages:
+- stage: Dev
+  displayName: Dev
+  condition: or(eq(variables['Build.SourceBranch'],'refs/heads/develop'), startsWith(variables['Build.SourceBranch'],'refs/heads/feature'), startsWith(variables['Build.SourceBranch'],'refs/heads/fix'))
+
+  variables:
+  - group: 'Infra-Dev'
+  - group: 'Infra-Common'
+
+  jobs:
+  - template: release-terraform-stage-template.yml
+    parameters: 
+      ServiceConnection: 'CONNECTION-DEV'
+      PoolName: 'POOL-DEV'
+      PipelineResourceName: 'resourceBuild'
+      EnvironmentName: Develop
+      ArtifactName: infra-azure
+      TerraformKey: $(TerraformInfraKey)
+
+- stage: Prod
+  displayName: Production
+  condition: eq(variables['Build.SourceBranch'],'refs/heads/main')
+
+  variables:
+  - group: 'Infra-Prod'
+  - group: 'Infra-Common'
+
+  jobs:
+  - template: release-terraform-stage-template.yml
+    parameters: 
+      ServiceConnection: 'CONNECTION-PRD'
+      PoolName: 'POOL-PRD'
+      PipelineResourceName: 'resourceBuild'
+      EnvironmentName: Production
+      ArtifactName: infra-azure
+      TerraformKey: $(TerraformInfraKey)
+
+

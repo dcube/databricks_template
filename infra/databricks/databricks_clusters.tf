@@ -21,13 +21,13 @@ resource "databricks_job" "this" {
 
     spark_conf = {
       "spark.databricks.cluster.profile" : "singleNode"
-      "fs.azure.account.oauth2.client.id" : "{{secrets/${local.secret_scope_name}/spn-sales-id}}"
+      "fs.azure.account.oauth2.client.id" : "{{secrets/${local.secret_scope_name}/spn-id}}"
       "fs.azure.account.oauth.provider.type" : "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider"
       "spark.master" : "local[*, 4]"
       "fs.azure.account.oauth2.client.endpoint" : "https://login.microsoftonline.com/${data.azurerm_client_config.current.tenant_id}/oauth2/token"
       "spark.databricks.delta.preview.enabled" : true
       "fs.azure.account.auth.type" : "OAuth"
-      "fs.azure.account.oauth2.client.secret" : "{{secrets/${local.secret_scope_name}/spn-sales-secret}}"
+      "fs.azure.account.oauth2.client.secret" : "{{secrets/${local.secret_scope_name}/spn-secret}}"
     }
 
     custom_tags = {

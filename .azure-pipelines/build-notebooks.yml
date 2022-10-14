@@ -1,0 +1,35 @@
+trigger:
+  branches:
+    include:
+    - develop
+    - main
+  paths:
+    include:
+    - databricks/notebooks/*
+    
+name: Build-Template.Notebooks.$(BuildID)
+
+jobs:
+- job: 'Publish_Notebook_databricks'
+  displayName: 'Publish Notebook Databricks'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Notebook Artifact'
+    inputs:
+      targetPath: databricks/notebooks
+      artifact: notebooks
+      
+- job: 'Publish_databricks_Init_Scripts'
+  displayName: 'Publish Databricks Clusters Init Scripts'
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - checkout: self
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Clusters Init Scripts Artifact'
+    inputs:
+      targetPath: databricks/init-scripts
+      artifact: init-scripts
