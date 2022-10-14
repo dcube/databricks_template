@@ -5,9 +5,9 @@ resource "databricks_pipeline" "plague-tale-2-update-gold-data" {
   target  = "GOLD"
 
   cluster {
-    label               = "default"
-    num_workers         = 1
-    node_type_id        = var.databricks_job_cluster_worker_type
+    label        = "default"
+    num_workers  = 1
+    node_type_id = var.databricks_job_cluster_worker_type
     spark_conf = {
       "spark.databricks.cluster.profile" : "singleNode"
       "fs.azure.account.oauth2.client.id" : "{{secrets/${local.secret_scope_name}/spn-id}}"

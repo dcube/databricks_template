@@ -1,5 +1,5 @@
 # az login
-# az account set --subscription "dcube - development"
+# az account set --subscription "-----"
 # terraform init
 # terraform plan --var-file=terraform.dev.tfvars
 
@@ -11,6 +11,6 @@ data "azurerm_resource_group" "project_resource_group" {
   name = var.project_resource_group
 }
 
-data "azuread_service_principal" "spn" {
-  display_name = var.spn_name
-}
+# data "azuread_service_principal" "spn" {
+#   display_name = var.spn_name
+# }
